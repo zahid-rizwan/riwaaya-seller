@@ -50,6 +50,8 @@ export default function ProductsPage() {
     name: "",
     description: "",
     category: "",
+    price: "18500",
+    stock: "10",
   });
 
   // Form State: Add Variant
