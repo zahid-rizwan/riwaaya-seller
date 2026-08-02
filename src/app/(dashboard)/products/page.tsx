@@ -45,6 +45,11 @@ export default function ProductsPage() {
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
+  // Manage Images Modal State
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedProductForImages, setSelectedProductForImages] = useState<any | null>(null);
+  const [uploadingMoreImage, setUploadingMoreImage] = useState(false);
+
   // Form State: Add Product
   const [productForm, setProductForm] = useState({
     name: "",
@@ -53,6 +58,25 @@ export default function ProductsPage() {
     price: "18500",
     stock: "10",
   });
+
+  // Image Upload State
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      setImageFiles((prev) => [...prev, ...selectedFiles]);
+      const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeImageFile = (index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Form State: Add Variant
   const [variantForm, setVariantForm] = useState({
@@ -119,6 +143,28 @@ export default function ProductsPage() {
     setFormSubmitting(true);
 
     try {
+      let uploadedImageUrls: string[] = ["/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"];
+      
+      if (imageFiles.length > 0) {
+        setUploadingImage(true);
+        const formData = new FormData();
+        imageFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        
+        try {
+          const uploadRes = await api.post("/products/upload", formData);
+          if (uploadRes && Array.isArray(uploadRes.urls)) {
+            uploadedImageUrls = uploadRes.urls;
+          }
+        } catch (uploadErr: any) {
+          console.error("Images upload failed:", uploadErr);
+          throw new Error("Failed to upload product images: " + (uploadErr.message || ""));
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
       await api.post("/products", {
         name: productForm.name,
         price: parseFloat(productForm.price || "18500"),
@@ -126,11 +172,13 @@ export default function ProductsPage() {
         category: productForm.category,
         tag: productForm.category === "1" ? "suits" : productForm.category === "2" ? "coords" : productForm.category === "3" ? "party" : "hampers",
         description: productForm.description,
-        images: ["/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"]
+        images: uploadedImageUrls
       }).catch(() => null);
 
       // Reset & Reload
       setProductForm({ name: "", description: "", category: "1", price: "18500", stock: "10" });
+      setImageFiles([]);
+      setImagePreviews([]);
       setShowProductModal(false);
       await loadData();
     } catch (err: any) {
@@ -224,6 +272,15 @@ export default function ProductsPage() {
         <div className={styles.productGrid}>
           {products.map((product) => (
             <div key={product.id} className={`${styles.productCard} card`}>
+              {product.images && product.images.length > 0 && (
+                <div style={{ width: "100%", height: "160px", borderRadius: "8px", overflow: "hidden", marginBottom: "12px", border: "1px solid var(--border-color)", background: "rgba(0,0,0,0.2)" }}>
+                  <img 
+                    src={product.images[0]} 
+                    alt={product.name} 
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                  />
+                </div>
+              )}
               <div className={styles.productHeader}>
                 <span className={styles.categoryTag}>{product.category?.name || product.tag || "Uncategorized"}</span>
                 <span className={`badge ${product.status === 'APPROVED' ? 'badge-approved' : product.status === 'REJECTED' ? 'badge-rejected' : 'badge-pending'}`} style={{ fontSize: "0.68rem" }}>
@@ -237,16 +294,28 @@ export default function ProductsPage() {
               <div className={styles.variantsSection}>
                 <div className={styles.variantsHeader}>
                   <span className={styles.variantsTitle}>Variants ({product.variants?.length || 0})</span>
-                  <button 
-                    className="btn-secondary" 
-                    style={{ fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px" }}
-                    onClick={() => {
-                      setSelectedProductId(product.id);
-                      setShowVariantModal(true);
-                    }}
-                  >
-                    <Plus size={12} /> Add Variant
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button 
+                      className="btn-secondary" 
+                      style={{ fontSize: "0.72rem", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}
+                      onClick={() => {
+                        setSelectedProductForImages(product);
+                        setShowImageModal(true);
+                      }}
+                    >
+                      Photos
+                    </button>
+                    <button 
+                      className="btn-secondary" 
+                      style={{ fontSize: "0.72rem", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}
+                      onClick={() => {
+                        setSelectedProductId(product.id);
+                        setShowVariantModal(true);
+                      }}
+                    >
+                      <Plus size={10} /> Variant
+                    </button>
+                  </div>
                 </div>
 
                 {(!product.variants || product.variants.length === 0) ? (
@@ -348,13 +417,46 @@ export default function ProductsPage() {
                     onChange={(e) => setProductForm((p) => ({ ...p, description: e.target.value }))}
                   ></textarea>
                 </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="prod-image">Product Images *</label>
+                  <input
+                    id="prod-image"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ background: "transparent", padding: "6px 0", border: "none", color: "var(--text-primary)", display: "block" }}
+                  />
+                  {imagePreviews.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "12px" }}>
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} style={{ position: "relative", width: "80px", height: "80px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-color)" }}>
+                          <img src={preview} alt={`Preview ${index}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <button
+                            type="button"
+                            onClick={() => removeImageFile(index)}
+                            style={{ position: "absolute", top: "4px", right: "4px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className={styles.modalFooter}>
                 <button type="button" className="btn-secondary" onClick={() => setShowProductModal(false)} disabled={formSubmitting}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary" disabled={formSubmitting}>
-                  {formSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Create Product"}
+                <button type="submit" className="btn-primary" disabled={formSubmitting || uploadingImage}>
+                  {formSubmitting || uploadingImage ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Loader2 className="animate-spin" size={16} />
+                      {uploadingImage ? "Uploading Image..." : "Creating..."}
+                    </span>
+                  ) : "Create Product"}
                 </button>
               </div>
             </form>
@@ -460,6 +562,102 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Images Modal */}
+      {showImageModal && selectedProductForImages && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal} style={{ maxWidth: "500px" }}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Manage Images for {selectedProductForImages.name}</h3>
+              <button onClick={() => { setShowImageModal(false); setSelectedProductForImages(null); }} style={{ background: "transparent", color: "var(--text-secondary)" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {/* Existing Images */}
+              <label style={{ display: "block", marginBottom: "8px", fontWeight: "600" }}>Current Images ({selectedProductForImages.images?.length || 0})</label>
+              
+              {(!selectedProductForImages.images || selectedProductForImages.images.length === 0) ? (
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "16px" }}>No images uploaded.</p>
+              ) : (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
+                  {selectedProductForImages.images.map((imgUrl: string, index: number) => (
+                    <div key={index} style={{ position: "relative", width: "90px", height: "90px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-color)" }}>
+                      <img src={imgUrl} alt={`Product ${index}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const updatedImages = selectedProductForImages.images.filter((_: any, i: number) => i !== index);
+                          try {
+                            const updatedProd = await api.put(`/products/${selectedProductForImages.id}`, { images: updatedImages });
+                            setSelectedProductForImages(updatedProd);
+                            await loadData();
+                          } catch (err) {
+                            alert("Failed to delete image");
+                          }
+                        }}
+                        style={{ position: "absolute", top: "4px", right: "4px", background: "rgba(220,53,69,0.9)", color: "#fff", border: "none", borderRadius: "50%", width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add New Images */}
+              <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
+                <label style={{ display: "block", marginBottom: "8px", fontWeight: "600" }}>Upload New Images</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  disabled={uploadingMoreImage}
+                  onChange={async (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setUploadingMoreImage(true);
+                      const formData = new FormData();
+                      Array.from(e.target.files).forEach(file => {
+                        formData.append("images", file);
+                      });
+
+                      try {
+                        const uploadRes = await api.post("/products/upload", formData);
+                        if (uploadRes && Array.isArray(uploadRes.urls)) {
+                          const currentImages = selectedProductForImages.images || [];
+                          const updatedImages = [...currentImages, ...uploadRes.urls];
+                          const updatedProd = await api.put(`/products/${selectedProductForImages.id}`, { images: updatedImages });
+                          setSelectedProductForImages(updatedProd);
+                          await loadData();
+                        }
+                      } catch (uploadErr) {
+                        alert("Failed to upload new images");
+                      } finally {
+                        setUploadingMoreImage(false);
+                      }
+                    }
+                  }}
+                  style={{ background: "transparent", padding: "6px 0", border: "none", color: "var(--text-primary)", display: "block" }}
+                />
+                {uploadingMoreImage && (
+                  <p style={{ fontSize: "0.8rem", color: "var(--color-accent)", marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Loader2 className="animate-spin" size={14} /> Uploading images...
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button 
+                type="button" 
+                className="btn-primary" 
+                onClick={() => { setShowImageModal(false); setSelectedProductForImages(null); }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

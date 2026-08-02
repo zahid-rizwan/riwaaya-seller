@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 255.984 31.9958" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="LeafDivider" clip-path="url(#clip0_15_104)">
+<path id="Vector" d="M-5.79834e-07 15.9979H95.994" stroke="var(--stroke-0, #B8963E)" stroke-width="0.399975"/>
+<path id="Vector_2" opacity="0.7" d="M111.993 15.9979C117.326 9.5983 122.659 9.5983 127.992 15.9979C122.659 22.3975 117.326 22.3975 111.993 15.9979Z" fill="var(--fill-0, #B8963E)"/>
+<path id="Vector_3" d="M127.992 17.9978C129.097 17.9978 129.992 17.1024 129.992 15.9979C129.992 14.8934 129.097 13.998 127.992 13.998C126.888 13.998 125.992 14.8934 125.992 15.9979C125.992 17.1024 126.888 17.9978 127.992 17.9978Z" fill="var(--fill-0, #B8963E)"/>
+<path id="Vector_4" opacity="0.7" d="M143.991 15.9979C138.658 9.5983 133.325 9.5983 127.992 15.9979C133.325 22.3975 138.658 22.3975 143.991 15.9979Z" fill="var(--fill-0, #B8963E)"/>
+<path id="Vector_5" d="M159.99 15.9979H255.984" stroke="var(--stroke-0, #B8963E)" stroke-width="0.399975"/>
+</g>
+<defs>
+<clipPath id="clip0_15_104">
+<rect width="255.984" height="31.9958" fill="white"/>
+</clipPath>
+</defs>
+</svg>

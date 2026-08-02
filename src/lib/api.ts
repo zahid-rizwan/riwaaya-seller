@@ -117,9 +117,13 @@ class ApiClient {
     
     // Set headers
     const headers = {
-      "Content-Type": "application/json",
       ...options.headers,
     } as Record<string, string>;
+
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
 
     const access = this.accessToken;
     if (access) {
@@ -173,10 +177,11 @@ class ApiClient {
   }
 
   public post<T = any>(path: string, body?: any, options: RequestOptions = {}): Promise<T> {
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
     return this.request<T>(path, {
       ...options,
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
     });
   }
 
