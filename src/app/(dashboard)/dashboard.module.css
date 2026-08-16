@@ -4,14 +4,22 @@
   background-color: var(--bg-main);
 }
 
+/* Sidebar Component - Locked Fixed on Screen Left Edge */
 .sidebar {
   width: 260px;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+  background-color: #3b52e1;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
   padding: 30px 20px;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -27,20 +35,19 @@
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  background: linear-gradient(135deg, #14b8a6 0%, #2dd4bf 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
   text-transform: uppercase;
 }
 
 .portalBadge {
   font-size: 0.65rem;
-  background: rgba(20, 184, 166, 0.12);
-  color: var(--color-accent);
-  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 3px 8px;
   border-radius: 4px;
-  font-weight: 600;
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.05em;
 }
 
 .nav {
@@ -49,30 +56,37 @@
   gap: 8px;
 }
 
+/* High Contrast Crisp White Nav Links */
 .navLink {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   border: 1px solid transparent;
 }
 
+.navLink svg {
+  color: #ffffff;
+  opacity: 0.9;
+}
+
 .navLink:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .navLinkActive {
-  color: var(--text-primary);
-  background: rgba(20, 184, 166, 0.08);
-  border-color: rgba(20, 184, 166, 0.15);
-  box-shadow: inset 3px 0 0 var(--color-primary);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 3px 0 0 #ffffff;
+  font-weight: 700;
 }
 
 .logoutBtn {
@@ -81,23 +95,28 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  color: #ef4444;
-  background: transparent;
-  border: none;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
   justify-content: flex-start;
+  cursor: pointer;
 }
 
 .logoutBtn:hover {
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(239, 68, 68, 0.8);
+  border-color: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
 }
 
+/* Main Content Workspace Offset for Fixed Sidebar */
 .mainContent {
   flex: 1;
+  margin-left: 260px;
   display: flex;
   flex-direction: column;
   min-width: 0; /* Prevents flex children from overflowing */
@@ -105,13 +124,16 @@
 
 .header {
   height: 70px;
-  border-bottom: 1px solid var(--border-color);
-  background-color: rgba(11, 12, 16, 0.5);
-  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
   padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .headerLeft {
@@ -133,28 +155,28 @@
 }
 
 .businessName {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: #0f172a;
 }
 
 .username {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: #64748b;
 }
 
 .avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  background: #3b52e1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
   font-size: 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
 }
 
 .pageContent {

@@ -155,15 +155,15 @@ class ApiClient {
         throw new Error(text || `Request failed with status ${response.status}`);
       }
 
-      // Check success based on backend response format middleware
-      if (response.status >= 400) {
-        const errorMsg = responseData?.error?.message || responseData?.message || "An error occurred";
+      // Check success based on backend response envelope format
+      if (response.status >= 400 || (responseData && responseData.success === false)) {
+        const errorMsg = responseData?.message || responseData?.error?.message || responseData?.error || "An error occurred";
         throw new Error(errorMsg);
       }
 
-      // Backend wraps successes in: { success: true, data: ..., error: null }
+      // Backend wraps successes in: { success: true, data: ..., message: ... }
       if (responseData && typeof responseData === "object" && "success" in responseData) {
-        return responseData.data as T;
+        return (responseData.data !== undefined && responseData.data !== null) ? responseData.data as T : responseData as T;
       }
 
       return responseData as T;

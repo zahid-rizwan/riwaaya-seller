@@ -27,12 +27,10 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserMe | null>(null);
   const [seller, setSeller] = useState<SellerProfile | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      setError(null);
       
       const authRes = await api.get("/auth/me").catch(() => null);
       const userObj = authRes?.user || { id: 1, username: 'Zahid', email: 'seller@riwaya.com', role: 'SELLER' };
@@ -81,24 +79,23 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className={styles.loadingWrapper}>
-        <Loader2 className="animate-spin" size={40} color="#14b8a6" />
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Loading Riwaaya dashboard...</p>
+        <Loader2 className="animate-spin text-teal-500" size={40} />
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Loading Seller Workspace...</p>
       </div>
     );
   }
 
-  // Handle case where user is logged in but is not a seller
   if (user && user.role !== "SELLER") {
     return (
       <div className={styles.loadingWrapper}>
         <div className={styles.errorBox}>
-          <AlertCircle size={48} color="#ef4444" style={{ marginBottom: "16px" }} />
+          <AlertCircle size={48} color="#ef4444" style={{ margin: "0 auto 16px" }} />
           <h3 className={styles.errorTitle}>Access Denied</h3>
           <p className={styles.errorText}>
-            Your account ({user.username}) is registered as a {user.role}. This portal is exclusively for verified boutique partners.
+            Your account ({user.username}) is registered as a {user.role}. This portal is exclusively for verified sellers.
           </p>
           <button className="btn-primary" onClick={handleLogout}>
-            <LogOut size={16} /> Sign Out
+            <LogOut size={16} /> Logout & Switch Account
           </button>
         </div>
       </div>
@@ -121,8 +118,8 @@ export default function DashboardLayout({
       {/* Sidebar Navigation */}
       <aside className={styles.sidebar}>
         <div className={styles.brandArea}>
-          <span className={styles.logo}>Riwaaya</span>
-          <span className={styles.portalBadge}>Partner</span>
+          <span className={styles.logo}>RIWAAYA</span>
+          <span className={styles.portalBadge}>SELLER</span>
         </div>
 
         <nav className={styles.nav}>
@@ -165,9 +162,9 @@ export default function DashboardLayout({
         </button>
       </aside>
 
-      {/* Main Panel */}
+      {/* Main Workspace Area */}
       <div className={styles.mainContent}>
-        {/* Top Header */}
+        {/* Top Header Bar */}
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             {seller && (
@@ -182,34 +179,33 @@ export default function DashboardLayout({
           </div>
 
           <div className={styles.headerRight}>
-            <button style={{ background: "transparent", color: "var(--text-secondary)", border: "none", position: "relative" }}>
-              <Bell size={20} />
-              <span style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, background: "var(--color-primary)", borderRadius: "50%" }}></span>
+            <button className="btn-secondary" style={{ padding: "8px 10px", borderRadius: "50%", background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569" }} aria-label="Notifications">
+              <Bell size={18} />
             </button>
 
-            <div style={{ height: "24px", width: "1px", background: "var(--border-color)" }}></div>
-
             <div className={styles.sellerProfileInfo}>
-              <span className={styles.businessName}>{seller?.business_name || "Luxury Boutique"}</span>
+              <span className={styles.businessName}>{seller?.business_name || "Seller Atelier"}</span>
               <span className={styles.username}>@{user?.username}</span>
             </div>
-
+            
             <div className={styles.avatar}>
               {getInitials(seller?.business_name)}
             </div>
           </div>
         </header>
 
-        {/* Dynamic Content */}
+        {/* Dynamic Page Content */}
         <main className={styles.pageContent}>
           {seller?.verification_status === "PENDING" && (
-            <div className="card" style={{ borderLeft: "4px solid var(--color-warning)", marginBottom: "24px", display: "flex", gap: "16px", alignItems: "flex-start", background: "rgba(245,158,11,0.03)" }}>
-              <AlertCircle color="var(--color-warning)" style={{ flexShrink: 0, marginTop: "2px" }} />
-              <div>
-                <h4 style={{ fontWeight: 600, color: "var(--color-warning)", marginBottom: "4px" }}>Boutique Review in Progress</h4>
-                <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-                  Your business documents are currently being verified by the Riwaaya Admin team. You can pre-populate your products and configure pricing in the meantime, but they will not be visible on the customer site until your boutique status is approved.
-                </p>
+            <div className="card" style={{ marginBottom: "24px", borderColor: "rgba(245, 158, 11, 0.3)", background: "rgba(245, 158, 11, 0.05)" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <AlertCircle size={20} color="#f59e0b" />
+                <div>
+                  <h4 style={{ color: "#f59e0b", marginBottom: "2px" }}>Boutique Under Review</h4>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                    Your boutique documents are being reviewed by the Riwaaya Admin team. You can pre-add products while waiting for approval.
+                  </p>
+                </div>
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Plus, 
   Package, 
@@ -35,6 +36,7 @@ interface Attribute {
 }
 
 export default function ProductsPage() {
+  const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
@@ -54,6 +56,8 @@ export default function ProductsPage() {
   const [productForm, setProductForm] = useState({
     name: "",
     description: "",
+    materials: "",
+    shipping: "",
     category: "",
     price: "18500",
     stock: "10",
@@ -172,11 +176,13 @@ export default function ProductsPage() {
         category: productForm.category,
         tag: productForm.category === "1" ? "suits" : productForm.category === "2" ? "coords" : productForm.category === "3" ? "party" : "hampers",
         description: productForm.description,
+        materials: productForm.materials,
+        shipping: productForm.shipping,
         images: uploadedImageUrls
       }).catch(() => null);
 
       // Reset & Reload
-      setProductForm({ name: "", description: "", category: "1", price: "18500", stock: "10" });
+      setProductForm({ name: "", description: "", materials: "", shipping: "", category: "1", price: "18500", stock: "10" });
       setImageFiles([]);
       setImagePreviews([]);
       setShowProductModal(false);
@@ -243,49 +249,55 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className={styles.productsContainer}>
+    <div>
       {/* Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Product Catalog</h1>
-          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", marginTop: "4px" }}>
             Add products and customize SKU attributes & inventory stock levels
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setShowProductModal(true)}>
-          <Plus size={18} /> Add Product
+        <button 
+          className="btn-primary" 
+          onClick={() => router.push('/products/new')}
+        >
+          <Plus size={16} /> Add Product
         </button>
       </div>
 
       {products.length === 0 ? (
-        <div className="card" style={{ padding: "60px 40px", textAlign: "center" }}>
+        <div className="card" style={{ textAlign: "center", padding: "60px 20px" }}>
           <Package size={48} color="var(--text-muted)" style={{ margin: "0 auto 16px" }} />
-          <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)" }}>No Products in Catalog</h3>
-          <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "20px" }}>
+          <h3 style={{ fontSize: "1.2rem", fontWeight: "600", marginBottom: "8px" }}>No Products in Catalog</h3>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "20px" }}>
             Create your first product listing to configure size, fabric, color, and stock.
           </p>
-          <button className="btn-primary" onClick={() => setShowProductModal(true)}>
+          <button 
+            className="btn-primary" 
+            onClick={() => router.push('/products/new')}
+          >
             Create Product
           </button>
         </div>
       ) : (
         <div className={styles.productGrid}>
           {products.map((product) => (
-            <div key={product.id} className={`${styles.productCard} card`}>
+            <div key={product.id} className={`card ${styles.productCard}`}>
               {product.images && product.images.length > 0 && (
-                <div style={{ width: "100%", height: "160px", borderRadius: "8px", overflow: "hidden", marginBottom: "12px", border: "1px solid var(--border-color)", background: "rgba(0,0,0,0.2)" }}>
+                <div style={{ width: "100%", height: "180px", borderRadius: "8px", overflow: "hidden", marginBottom: "12px", border: "1px solid var(--border-color)", background: "rgba(0,0,0,0.2)", position: "relative" }}>
                   <img 
                     src={product.images[0]} 
                     alt={product.name} 
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
+                  <span className={`badge ${product.status === 'APPROVED' ? 'badge-approved' : product.status === 'REJECTED' ? 'badge-rejected' : 'badge-pending'}`} style={{ position: "absolute", top: "10px", right: "10px" }}>
+                    {product.status === 'APPROVED' ? 'ACTIVE' : product.status === 'REJECTED' ? 'REJECTED' : 'PENDING'}
+                  </span>
                 </div>
               )}
               <div className={styles.productHeader}>
-                <span className={styles.categoryTag}>{product.category?.name || product.tag || "Uncategorized"}</span>
-                <span className={`badge ${product.status === 'APPROVED' ? 'badge-approved' : product.status === 'REJECTED' ? 'badge-rejected' : 'badge-pending'}`} style={{ fontSize: "0.68rem" }}>
-                  {product.status === 'APPROVED' ? 'ACTIVE' : product.status === 'REJECTED' ? 'REJECTED' : 'PENDING APPROVAL'}
-                </span>
+                <span className={styles.categoryTag}>{product.category?.name || product.tag || "Pakistani Suits"}</span>
               </div>
               <h3 className={styles.productTitle}>{product.name}</h3>
               <p className={styles.productDesc}>{product.description}</p>
@@ -407,14 +419,36 @@ export default function ProductsPage() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label htmlFor="prod-desc">Description *</label>
+                  <label htmlFor="prod-desc">Details (Description) *</label>
                   <textarea
                     id="prod-desc"
                     required
-                    rows={4}
+                    rows={3}
                     placeholder="Detailed description of the couture, detailing embroidery, sizing, fit, fabric quality..."
                     value={productForm.description}
                     onChange={(e) => setProductForm((p) => ({ ...p, description: e.target.value }))}
+                  ></textarea>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="prod-materials">Materials & Fabric Care</label>
+                  <textarea
+                    id="prod-materials"
+                    rows={3}
+                    placeholder="e.g. 100% Pure Lawn Cotton, Pure Silk Dupatta. Handcrafted threadwork & tilla. Dry clean only."
+                    value={productForm.materials}
+                    onChange={(e) => setProductForm((p) => ({ ...p, materials: e.target.value }))}
+                  ></textarea>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="prod-shipping">Shipping & Returns Information</label>
+                  <textarea
+                    id="prod-shipping"
+                    rows={3}
+                    placeholder="e.g. Free delivery on orders over PKR 5,000. 7-day hassle-free return window and quick exchanges."
+                    value={productForm.shipping}
+                    onChange={(e) => setProductForm((p) => ({ ...p, shipping: e.target.value }))}
                   ></textarea>
                 </div>
 
