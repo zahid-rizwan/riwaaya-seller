@@ -11,7 +11,11 @@ import {
   Loader2, 
   Check, 
   Coins, 
-  Layers 
+  Layers,
+  Pencil,
+  Trash2,
+  Eye,
+  EyeOff 
 } from "lucide-react";
 import { api } from "@/lib/api";
 import styles from "./products.module.css";
@@ -51,6 +55,18 @@ export default function ProductsPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProductForImages, setSelectedProductForImages] = useState<any | null>(null);
   const [uploadingMoreImage, setUploadingMoreImage] = useState(false);
+
+  // Edit Product Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    category: "",
+    price: "",
+    stock: "",
+    is_active: true,
+  });
 
   // Form State: Add Product
   const [productForm, setProductForm] = useState({
@@ -234,6 +250,86 @@ export default function ProductsPage() {
     });
   };
 
+  const handleOpenEdit = (product: any) => {
+    const pId = product.id || product._id;
+    setEditingProductId(pId);
+    setEditForm({
+      name: product.name || "",
+      description: product.description || "",
+      category: product.category?.id || product.category || "",
+      price: product.price ? String(product.price) : "18500",
+      stock: product.stock ? String(product.stock) : "10",
+      is_active: product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE'),
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProductId) return;
+    setFormError("");
+    setFormSubmitting(true);
+    try {
+      await api.put(`/seller/products/${editingProductId}`, {
+        name: editForm.name,
+        description: editForm.description,
+        category: editForm.category,
+        price: parseFloat(editForm.price || "0"),
+        stock: parseInt(editForm.stock || "0"),
+        is_active: editForm.is_active,
+        status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
+      }).catch(async () => {
+        await api.put(`/products/${editingProductId}`, {
+          name: editForm.name,
+          description: editForm.description,
+          category: editForm.category,
+          price: parseFloat(editForm.price || "0"),
+          stock: parseInt(editForm.stock || "0"),
+          is_active: editForm.is_active,
+          status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
+        });
+      });
+      setShowEditModal(false);
+      await loadData();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to update product.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const handleToggleHide = async (product: any) => {
+    const pId = product.id || product._id;
+    const currentIsActive = product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE');
+    const newIsActive = !currentIsActive;
+    try {
+      await api.post(`/seller/products/${pId}/toggle-active`).catch(async () => {
+        await api.put(`/products/${pId}`, {
+          is_active: newIsActive,
+          status: newIsActive ? 'APPROVED' : 'HIDDEN',
+        });
+      });
+      await loadData();
+    } catch (err) {
+      console.error("Failed to toggle product visibility:", err);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product from the catalog? This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await api.delete(`/seller/products/${productId}`).catch(async () => {
+        await api.delete(`/products/${productId}`);
+      });
+      await loadData();
+    } catch (err) {
+      console.error("Failed to delete product:", err);
+      alert("Failed to delete product.");
+    }
+  };
+
   const formatCurrency = (val: string | number) => {
     const parsed = typeof val === "string" ? parseFloat(val) : val;
     if (isNaN(parsed)) return "PKR 0";
@@ -301,6 +397,35 @@ export default function ProductsPage() {
               </div>
               <h3 className={styles.productTitle}>{product.name}</h3>
               <p className={styles.productDesc}>{product.description}</p>
+
+              {/* Action Toolbar for Edit, Hide, Delete */}
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", margin: "12px 0", paddingTop: "8px", borderTop: "1px dashed var(--border-color)" }}>
+                <button 
+                  className="btn-secondary" 
+                  style={{ fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}
+                  onClick={() => handleOpenEdit(product)}
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+                <button 
+                  className="btn-secondary" 
+                  style={{ fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px" }}
+                  onClick={() => handleToggleHide(product)}
+                >
+                  {(product.is_active !== false && product.status !== 'HIDDEN') ? (
+                    <><EyeOff size={12} /> Hide</>
+                  ) : (
+                    <><Eye size={12} /> Show</>
+                  )}
+                </button>
+                <button 
+                  className="btn-secondary" 
+                  style={{ fontSize: "0.75rem", padding: "4px 8px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "4px", color: "var(--color-danger)" }}
+                  onClick={() => handleDeleteProduct(product.id || product._id)}
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
 
               {/* Variants Section */}
               <div className={styles.variantsSection}>
@@ -692,6 +817,95 @@ export default function ProductsPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Product Modal */}
+      {showEditModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Edit Product Details</h3>
+              <button onClick={() => setShowEditModal(false)} style={{ background: "transparent", color: "var(--text-secondary)", border: "none", cursor: "pointer" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit}>
+              <div className={styles.modalBody}>
+                {formError && (
+                  <div className="badge badge-rejected" style={{ width: "100%", padding: "10px", borderRadius: "8px", marginBottom: "16px", textTransform: "none", fontSize: "0.82rem" }}>
+                    {formError}
+                  </div>
+                )}
+                
+                <div className={styles.formGroup}>
+                  <label htmlFor="edit-prod-name">Product Name *</label>
+                  <input
+                    id="edit-prod-name"
+                    type="text"
+                    required
+                    value={editForm.name}
+                    onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+
+                <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="edit-prod-price">Retail Price (PKR)</label>
+                    <input
+                      id="edit-prod-price"
+                      type="number"
+                      value={editForm.price}
+                      onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))}
+                    />
+                  </div>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="edit-prod-stock">Stock Level</label>
+                    <input
+                      id="edit-prod-stock"
+                      type="number"
+                      value={editForm.stock}
+                      onChange={(e) => setEditForm((p) => ({ ...p, stock: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="edit-prod-desc">Description *</label>
+                  <textarea
+                    id="edit-prod-desc"
+                    required
+                    rows={3}
+                    value={editForm.description}
+                    onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                  ></textarea>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="edit-prod-active" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                    <input
+                      id="edit-prod-active"
+                      type="checkbox"
+                      checked={editForm.is_active}
+                      onChange={(e) => setEditForm((p) => ({ ...p, is_active: e.target.checked }))}
+                    />
+                    <span>Active in Storefront (Visible to Buyers)</span>
+                  </label>
+                </div>
+              </div>
+              <div className={styles.modalFooter}>
+                <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)} disabled={formSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={formSubmitting}>
+                  {formSubmitting ? (
+                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Loader2 className="animate-spin" size={16} /> Updating...
+                    </span>
+                  ) : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
