@@ -393,7 +393,9 @@ export default function ProductsPage() {
                 </div>
               )}
               <div className={styles.productHeader}>
-                <span className={styles.categoryTag}>{product.category?.name || product.tag || "Pakistani Suits"}</span>
+                <span className={styles.categoryTag}>
+                  {product.category?.name || (product.tag === 'coords' ? 'Co-Ord Sets' : product.tag === 'party' ? 'Party Wear' : product.tag === 'hampers' ? 'Gift Hampers' : 'Pakistani Suits')}
+                </span>
               </div>
               <h3 className={styles.productTitle}>{product.name}</h3>
               <p className={styles.productDesc}>{product.description}</p>

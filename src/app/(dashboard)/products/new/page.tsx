@@ -309,9 +309,30 @@ export default function AddProductPage() {
                 {imagePreviews.length} photos added
               </span>
             </div>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "16px" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "12px" }}>
               Upload studio imagery (JPEG, PNG, WEBP). First image will serve as primary storefront cover.
             </p>
+
+            {/* Myntra & Flipkart Catalog Photography Guidelines Box */}
+            <div style={{
+              background: "rgba(99, 102, 241, 0.08)",
+              border: "1px solid rgba(99, 102, 241, 0.25)",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              marginBottom: "16px",
+              display: "flex",
+              gap: "12px",
+              alignItems: "flex-start"
+            }}>
+              <Sparkles size={20} color="#6366f1" style={{ flexShrink: 0, marginTop: "2px" }} />
+              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
+                <strong style={{ color: "#ffffff", display: "block", marginBottom: "2px" }}>
+                  ✦ Myntra & Flipkart Catalog Photography Guidelines:
+                </strong>
+                • <strong>Aspect Ratio:</strong> Upload photos in 3:4 vertical portrait ratio (e.g. 900 x 1200 px or 600 x 800 px).<br />
+                • <strong>Auto Top-Center Alignment:</strong> Your suit/model photos automatically align to top-center on the storefront so necklines, embroidery, and head details are never cropped!
+              </div>
+            </div>
 
             {/* Drag and Drop Zone */}
             <div 
@@ -601,7 +622,7 @@ export default function AddProductPage() {
             <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "12px", border: "1px solid var(--border-color)", overflow: "hidden" }}>
               <div style={{ position: "relative", width: "100%", height: "220px", background: "rgba(255,255,255,0.02)" }}>
                 {imagePreviews.length > 0 ? (
-                  <img src={imagePreviews[0]} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={imagePreviews[0]} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center" }} />
                 ) : (
                   <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", gap: "8px" }}>
                     <ImageIcon size={36} />
