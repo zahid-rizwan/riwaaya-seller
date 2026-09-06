@@ -62,11 +62,92 @@ export default function ProductsPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
-    category: "",
-    price: "",
-    stock: "",
+    materials: "",
+    shipping: "",
+    category: "1",
+    tag: "suits",
+    badge: "New",
+    price: "18500",
+    stock: "10",
     is_active: true,
+    images: [] as string[]
   });
+  const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
+  const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
+
+  const handleOpenEdit = (product: any) => {
+    const pId = product.id || product._id;
+    setEditingProductId(pId);
+    let catVal = "1";
+    if (product.tag === "coords" || product.category === "2" || product.category?.slug === "coords") catVal = "2";
+    else if (product.tag === "party" || product.category === "3" || product.category?.slug === "party") catVal = "3";
+    else if (product.tag === "hampers" || product.category === "4" || product.category?.slug === "hampers") catVal = "4";
+
+    setEditForm({
+      name: product.name || "",
+      description: product.description || "",
+      materials: product.materials || "Pure Lawn Cotton & Silk Dupatta. Handcrafted threadwork. Dry clean only.",
+      shipping: product.shipping || "Free delivery on orders over PKR 5,000. 7-day return policy.",
+      category: catVal,
+      tag: product.tag || (catVal === "1" ? "suits" : catVal === "2" ? "coords" : catVal === "3" ? "party" : "hampers"),
+      badge: product.badge || "New",
+      price: product.price ? String(product.price).replace(/[^\d.]/g, '') : "18500",
+      stock: product.stock ? String(product.stock) : "10",
+      is_active: product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE'),
+      images: Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || "/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"]
+    });
+    setEditImageFiles([]);
+    setEditImagePreviews([]);
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProductId) return;
+    setFormError("");
+    setFormSubmitting(true);
+    try {
+      let finalImages = [...editForm.images];
+      if (editImageFiles.length > 0) {
+        const formData = new FormData();
+        editImageFiles.forEach((file) => formData.append("images", file));
+        try {
+          const uploadRes = await api.post("/products/upload", formData);
+          if (uploadRes && Array.isArray(uploadRes.urls)) {
+            finalImages = [...finalImages, ...uploadRes.urls];
+          }
+        } catch (uploadErr) {
+          console.error("Edit image upload error:", uploadErr);
+        }
+      }
+
+      const updatePayload = {
+        name: editForm.name,
+        description: editForm.description,
+        materials: editForm.materials,
+        shipping: editForm.shipping,
+        category: editForm.category,
+        tag: editForm.tag,
+        badge: editForm.badge,
+        price: parseFloat(editForm.price || "0"),
+        stock: parseInt(editForm.stock || "0"),
+        is_active: editForm.is_active,
+        status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
+        images: finalImages
+      };
+
+      await api.put(`/seller/products/${editingProductId}`, updatePayload).catch(async () => {
+        await api.put(`/products/${editingProductId}`, updatePayload);
+      });
+
+      setShowEditModal(false);
+      await loadData();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to update product.");
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
 
   // Form State: Add Product
   const [productForm, setProductForm] = useState({
@@ -250,53 +331,7 @@ export default function ProductsPage() {
     });
   };
 
-  const handleOpenEdit = (product: any) => {
-    const pId = product.id || product._id;
-    setEditingProductId(pId);
-    setEditForm({
-      name: product.name || "",
-      description: product.description || "",
-      category: product.category?.id || product.category || "",
-      price: product.price ? String(product.price) : "18500",
-      stock: product.stock ? String(product.stock) : "10",
-      is_active: product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE'),
-    });
-    setShowEditModal(true);
-  };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProductId) return;
-    setFormError("");
-    setFormSubmitting(true);
-    try {
-      await api.put(`/seller/products/${editingProductId}`, {
-        name: editForm.name,
-        description: editForm.description,
-        category: editForm.category,
-        price: parseFloat(editForm.price || "0"),
-        stock: parseInt(editForm.stock || "0"),
-        is_active: editForm.is_active,
-        status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
-      }).catch(async () => {
-        await api.put(`/products/${editingProductId}`, {
-          name: editForm.name,
-          description: editForm.description,
-          category: editForm.category,
-          price: parseFloat(editForm.price || "0"),
-          stock: parseInt(editForm.stock || "0"),
-          is_active: editForm.is_active,
-          status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
-        });
-      });
-      setShowEditModal(false);
-      await loadData();
-    } catch (err: any) {
-      setFormError(err.message || "Failed to update product.");
-    } finally {
-      setFormSubmitting(false);
-    }
-  };
 
   const handleToggleHide = async (product: any) => {
     const pId = product.id || product._id;
@@ -825,75 +860,193 @@ export default function ProductsPage() {
       {/* Edit Product Modal */}
       {showEditModal && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
+          <div className={styles.modal} style={{ maxWidth: "680px" }}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit Product Details</h3>
+              <h3 className={styles.modalTitle}>Edit Product Listing Details</h3>
               <button onClick={() => setShowEditModal(false)} style={{ background: "transparent", color: "var(--text-secondary)", border: "none", cursor: "pointer" }}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleEditSubmit}>
-              <div className={styles.modalBody}>
+              <div className={styles.modalBody} style={{ maxHeight: "72vh", overflowY: "auto", paddingRight: "8px" }}>
                 {formError && (
                   <div className="badge badge-rejected" style={{ width: "100%", padding: "10px", borderRadius: "8px", marginBottom: "16px", textTransform: "none", fontSize: "0.82rem" }}>
                     {formError}
                   </div>
                 )}
                 
+                {/* 1. Basic Title */}
                 <div className={styles.formGroup}>
-                  <label htmlFor="edit-prod-name">Product Name *</label>
+                  <label htmlFor="edit-prod-name">Product Title *</label>
                   <input
                     id="edit-prod-name"
                     type="text"
                     required
+                    placeholder="e.g. Gulzar Hand-Embroidered Velvet Suit"
                     value={editForm.name}
                     onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
                   />
                 </div>
 
-                <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                {/* 2. Category, Badge & Price */}
+                <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px", marginBottom: "16px" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                    <label htmlFor="edit-prod-price">Retail Price (PKR)</label>
+                    <label htmlFor="edit-prod-category">Category *</label>
+                    <select
+                      id="edit-prod-category"
+                      value={editForm.category}
+                      onChange={(e) => {
+                        const catVal = e.target.value;
+                        const tagVal = catVal === "1" ? "suits" : catVal === "2" ? "coords" : catVal === "3" ? "party" : "hampers";
+                        setEditForm((p) => ({ ...p, category: catVal, tag: tagVal }));
+                      }}
+                    >
+                      <option value="1">Pakistani Suits</option>
+                      <option value="2">Co-Ord Sets</option>
+                      <option value="3">Party & Formal Wear</option>
+                      <option value="4">Gift Hampers</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="edit-prod-badge">Badge Label</label>
+                    <select
+                      id="edit-prod-badge"
+                      value={editForm.badge}
+                      onChange={(e) => setEditForm((p) => ({ ...p, badge: e.target.value }))}
+                    >
+                      <option value="New">New</option>
+                      <option value="Bestseller">Bestseller</option>
+                      <option value="Limited">Limited Edition</option>
+                      <option value="Exclusive">Exclusive</option>
+                      <option value="Sale">Sale</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="edit-prod-price">Retail Price (PKR) *</label>
                     <input
                       id="edit-prod-price"
                       type="number"
+                      required
                       value={editForm.price}
                       onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))}
                     />
                   </div>
+                </div>
+
+                {/* 3. Stock & Status */}
+                <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                    <label htmlFor="edit-prod-stock">Stock Level</label>
+                    <label htmlFor="edit-prod-stock">Total Available Stock *</label>
                     <input
                       id="edit-prod-stock"
                       type="number"
+                      required
                       value={editForm.stock}
                       onChange={(e) => setEditForm((p) => ({ ...p, stock: e.target.value }))}
                     />
                   </div>
+                  <div className={styles.formGroup} style={{ marginBottom: 0, display: "flex", alignItems: "center" }}>
+                    <label htmlFor="edit-prod-active" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", marginTop: "24px" }}>
+                      <input
+                        id="edit-prod-active"
+                        type="checkbox"
+                        checked={editForm.is_active}
+                        onChange={(e) => setEditForm((p) => ({ ...p, is_active: e.target.checked }))}
+                      />
+                      <span style={{ fontWeight: "600", fontSize: "0.9rem" }}>Active in Storefront (Visible)</span>
+                    </label>
+                  </div>
                 </div>
 
+                {/* 4. Rich Descriptions (3 Tabs style or Stacked) */}
                 <div className={styles.formGroup}>
-                  <label htmlFor="edit-prod-desc">Description *</label>
+                  <label htmlFor="edit-prod-desc">Product Overview & Story *</label>
                   <textarea
                     id="edit-prod-desc"
                     required
                     rows={3}
+                    placeholder="Provide rich details about craftsmanship, silhouette, and design."
                     value={editForm.description}
                     onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
                   ></textarea>
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label htmlFor="edit-prod-active" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                    <input
-                      id="edit-prod-active"
-                      type="checkbox"
-                      checked={editForm.is_active}
-                      onChange={(e) => setEditForm((p) => ({ ...p, is_active: e.target.checked }))}
-                    />
-                    <span>Active in Storefront (Visible to Buyers)</span>
-                  </label>
+                  <label htmlFor="edit-prod-materials">Fabrics & Materials Details</label>
+                  <textarea
+                    id="edit-prod-materials"
+                    rows={2}
+                    placeholder="e.g. Pure Lawn Cotton & Silk Dupatta. Handcrafted threadwork."
+                    value={editForm.materials}
+                    onChange={(e) => setEditForm((p) => ({ ...p, materials: e.target.value }))}
+                  ></textarea>
                 </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="edit-prod-shipping">Shipping & Return Policy</label>
+                  <input
+                    id="edit-prod-shipping"
+                    type="text"
+                    placeholder="e.g. Free delivery on orders over PKR 5,000. 7-day return policy."
+                    value={editForm.shipping}
+                    onChange={(e) => setEditForm((p) => ({ ...p, shipping: e.target.value }))}
+                  />
+                </div>
+
+                {/* 5. Images Manager */}
+                <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "16px", marginTop: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "600" }}>Current Product Gallery</label>
+                  
+                  {editForm.images && editForm.images.length > 0 ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "12px" }}>
+                      {editForm.images.map((imgUrl, index) => (
+                        <div key={index} style={{ position: "relative", width: "100%", paddingTop: "133%", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-color)" }}>
+                          <img src={imgUrl} alt={`Image ${index}`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditForm(p => ({ ...p, images: p.images.filter((_, i) => i !== index) }));
+                            }}
+                            style={{ position: "absolute", top: "4px", right: "4px", background: "rgba(220,53,69,0.9)", color: "#fff", border: "none", borderRadius: "50%", width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: "12px" }}>No images attached.</p>
+                  )}
+
+                  <label style={{ display: "block", marginBottom: "6px", fontSize: "0.85rem", fontWeight: "600" }}>Add Additional Photos</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        const files = Array.from(e.target.files);
+                        setEditImageFiles(prev => [...prev, ...files]);
+                        const newPreviews = files.map(file => URL.createObjectURL(file));
+                        setEditImagePreviews(prev => [...prev, ...newPreviews]);
+                      }
+                    }}
+                    style={{ background: "transparent", border: "none", padding: "4px 0" }}
+                  />
+
+                  {editImagePreviews.length > 0 && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", overflowX: "auto" }}>
+                      {editImagePreviews.map((preview, idx) => (
+                        <div key={idx} style={{ position: "relative", width: "50px", height: "65px", borderRadius: "6px", overflow: "hidden" }}>
+                          <img src={preview} alt={`New Preview ${idx}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
               </div>
               <div className={styles.modalFooter}>
                 <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)} disabled={formSubmitting}>
@@ -902,9 +1055,9 @@ export default function ProductsPage() {
                 <button type="submit" className="btn-primary" disabled={formSubmitting}>
                   {formSubmitting ? (
                     <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Loader2 className="animate-spin" size={16} /> Updating...
+                      <Loader2 className="animate-spin" size={16} /> Saving Changes...
                     </span>
-                  ) : "Save Changes"}
+                  ) : "Save Product Details"}
                 </button>
               </div>
             </form>
