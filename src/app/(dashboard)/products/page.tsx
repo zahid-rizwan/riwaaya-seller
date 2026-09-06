@@ -68,6 +68,7 @@ export default function ProductsPage() {
     tag: "suits",
     badge: "New",
     price: "18500",
+    originalPrice: "24500",
     stock: "10",
     is_active: true,
     images: [] as string[]
@@ -83,6 +84,9 @@ export default function ProductsPage() {
     else if (product.tag === "party" || product.category === "3" || product.category?.slug === "party") catVal = "3";
     else if (product.tag === "hampers" || product.category === "4" || product.category?.slug === "hampers") catVal = "4";
 
+    const pPrice = product.price ? parseFloat(String(product.price).replace(/[^\d.]/g, '')) : 18500;
+    const pOrigPrice = product.originalPrice ? parseFloat(String(product.originalPrice).replace(/[^\d.]/g, '')) : Math.round(pPrice * 1.25);
+
     setEditForm({
       name: product.name || "",
       description: product.description || "",
@@ -91,7 +95,8 @@ export default function ProductsPage() {
       category: catVal,
       tag: product.tag || (catVal === "1" ? "suits" : catVal === "2" ? "coords" : catVal === "3" ? "party" : "hampers"),
       badge: product.badge || "New",
-      price: product.price ? String(product.price).replace(/[^\d.]/g, '') : "18500",
+      price: String(pPrice),
+      originalPrice: String(pOrigPrice),
       stock: product.stock ? String(product.stock) : "10",
       is_active: product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE'),
       images: Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || "/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"]
@@ -130,6 +135,7 @@ export default function ProductsPage() {
         tag: editForm.tag,
         badge: editForm.badge,
         price: parseFloat(editForm.price || "0"),
+        originalPrice: parseFloat(editForm.originalPrice || "0"),
         stock: parseInt(editForm.stock || "0"),
         is_active: editForm.is_active,
         status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
@@ -155,8 +161,9 @@ export default function ProductsPage() {
     description: "",
     materials: "",
     shipping: "",
-    category: "",
+    category: "1",
     price: "18500",
+    originalPrice: "24500",
     stock: "10",
   });
 
@@ -266,9 +273,13 @@ export default function ProductsPage() {
         }
       }
 
+      const parsedPrice = parseFloat(productForm.price || "18500");
+      const parsedOrigPrice = productForm.originalPrice ? parseFloat(productForm.originalPrice) : Math.round(parsedPrice * 1.25);
+
       await api.post("/products", {
         name: productForm.name,
-        price: parseFloat(productForm.price || "18500"),
+        price: parsedPrice,
+        originalPrice: parsedOrigPrice,
         stock: parseInt(productForm.stock || "10"),
         category: productForm.category,
         tag: productForm.category === "1" ? "suits" : productForm.category === "2" ? "coords" : productForm.category === "3" ? "party" : "hampers",
@@ -279,7 +290,7 @@ export default function ProductsPage() {
       }).catch(() => null);
 
       // Reset & Reload
-      setProductForm({ name: "", description: "", materials: "", shipping: "", category: "1", price: "18500", stock: "10" });
+      setProductForm({ name: "", description: "", materials: "", shipping: "", category: "1", price: "18500", originalPrice: "24500", stock: "10" });
       setImageFiles([]);
       setImagePreviews([]);
       setShowProductModal(false);
@@ -924,13 +935,24 @@ export default function ProductsPage() {
                   </div>
 
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                    <label htmlFor="edit-prod-price">Retail Price (PKR) *</label>
+                    <label htmlFor="edit-prod-price">Offer Price (₹/PKR) *</label>
                     <input
                       id="edit-prod-price"
                       type="number"
                       required
                       value={editForm.price}
                       onChange={(e) => setEditForm((p) => ({ ...p, price: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="edit-prod-orig-price">Original MRP (Cross/Strike Price)</label>
+                    <input
+                      id="edit-prod-orig-price"
+                      type="number"
+                      placeholder="e.g. 24500"
+                      value={editForm.originalPrice}
+                      onChange={(e) => setEditForm((p) => ({ ...p, originalPrice: e.target.value }))}
                     />
                   </div>
                 </div>
