@@ -39,6 +39,12 @@ interface Attribute {
   values: AttributeValue[];
 }
 
+interface ColorVariantInput {
+  name: string;
+  hex: string;
+  inStock: boolean;
+}
+
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<any[]>([]);
@@ -56,6 +62,15 @@ export default function ProductsPage() {
   const [selectedProductForImages, setSelectedProductForImages] = useState<any | null>(null);
   const [uploadingMoreImage, setUploadingMoreImage] = useState(false);
 
+  // Color Variants Input State for New & Edit forms
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorHex, setNewColorHex] = useState("#046A38");
+  const [newColorInStock, setNewColorInStock] = useState(true);
+
+  const [editNewColorName, setEditNewColorName] = useState("");
+  const [editNewColorHex, setEditNewColorHex] = useState("#046A38");
+  const [editNewColorInStock, setEditNewColorInStock] = useState(true);
+
   // Edit Product Modal State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -71,7 +86,8 @@ export default function ProductsPage() {
     originalPrice: "24500",
     stock: "10",
     is_active: true,
-    images: [] as string[]
+    images: [] as string[],
+    colors: [] as ColorVariantInput[]
   });
   const [editImageFiles, setEditImageFiles] = useState<File[]>([]);
   const [editImagePreviews, setEditImagePreviews] = useState<string[]>([]);
@@ -86,6 +102,13 @@ export default function ProductsPage() {
 
     const pPrice = product.price ? parseFloat(String(product.price).replace(/[^\d.]/g, '')) : 18500;
     const pOrigPrice = product.originalPrice ? parseFloat(String(product.originalPrice).replace(/[^\d.]/g, '')) : Math.round(pPrice * 1.25);
+    const existingColors: ColorVariantInput[] = Array.isArray(product.colors)
+      ? product.colors.map((c: any) => ({
+          name: c.name || 'Custom',
+          hex: c.hex || '#000000',
+          inStock: c.inStock !== false
+        }))
+      : [];
 
     setEditForm({
       name: product.name || "",
@@ -99,7 +122,8 @@ export default function ProductsPage() {
       originalPrice: String(pOrigPrice),
       stock: product.stock ? String(product.stock) : "10",
       is_active: product.is_active !== undefined ? product.is_active : (product.status === 'APPROVED' || product.status === 'ACTIVE'),
-      images: Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || "/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"]
+      images: Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image || "/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"],
+      colors: existingColors
     });
     setEditImageFiles([]);
     setEditImagePreviews([]);
@@ -136,6 +160,7 @@ export default function ProductsPage() {
         badge: editForm.badge,
         price: parseFloat(editForm.price || "0"),
         originalPrice: parseFloat(editForm.originalPrice || "0"),
+        colors: editForm.colors,
         stock: parseInt(editForm.stock || "0"),
         is_active: editForm.is_active,
         status: editForm.is_active ? 'APPROVED' : 'HIDDEN',
@@ -165,6 +190,7 @@ export default function ProductsPage() {
     price: "18500",
     originalPrice: "24500",
     stock: "10",
+    colors: [] as ColorVariantInput[]
   });
 
   // Image Upload State
@@ -280,6 +306,7 @@ export default function ProductsPage() {
         name: productForm.name,
         price: parsedPrice,
         originalPrice: parsedOrigPrice,
+        colors: productForm.colors,
         stock: parseInt(productForm.stock || "10"),
         category: productForm.category,
         tag: productForm.category === "1" ? "suits" : productForm.category === "2" ? "coords" : productForm.category === "3" ? "party" : "hampers",
@@ -290,7 +317,7 @@ export default function ProductsPage() {
       }).catch(() => null);
 
       // Reset & Reload
-      setProductForm({ name: "", description: "", materials: "", shipping: "", category: "1", price: "18500", originalPrice: "24500", stock: "10" });
+      setProductForm({ name: "", description: "", materials: "", shipping: "", category: "1", price: "18500", originalPrice: "24500", stock: "10", colors: [] });
       setImageFiles([]);
       setImagePreviews([]);
       setShowProductModal(false);
@@ -623,6 +650,80 @@ export default function ProductsPage() {
                     value={productForm.shipping}
                     onChange={(e) => setProductForm((p) => ({ ...p, shipping: e.target.value }))}
                   ></textarea>
+                </div>
+
+                {/* Color Variants Manager (Add Form) */}
+                <div style={{ borderTop: "1px solid var(--border-color, #e5e5e5)", paddingTop: "16px", marginTop: "16px", marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>Color Variants & Swatches</label>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #666)", marginBottom: "12px" }}>
+                    Add color options available for this item. Storefront will display ONLY the colors configured here.
+                  </p>
+
+                  {productForm.colors && productForm.colors.length > 0 ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+                      {productForm.colors.map((c, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-card, #f8f9fa)", border: "1px solid var(--border-color, #e2e8f0)", borderRadius: "20px", padding: "4px 10px 4px 8px", fontSize: "0.85rem" }}>
+                          <span style={{ width: "14px", height: "14px", borderRadius: "50%", backgroundColor: c.hex, border: "1px solid rgba(0,0,0,0.2)" }} />
+                          <span style={{ fontWeight: 600 }}>{c.name}</span>
+                          <span style={{ fontSize: "0.72rem", color: c.inStock ? "#2e7d32" : "#d32f2f", fontWeight: 700 }}>
+                            {c.inStock ? "(In Stock)" : "(Out of Stock)"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setProductForm(p => ({ ...p, colors: p.colors.filter((_, i) => i !== idx) }))}
+                            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", marginLeft: "4px" }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "0.8rem", color: "#888", fontStyle: "italic", marginBottom: "10px" }}>No color variants added yet.</p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                    <input
+                      type="text"
+                      placeholder="Color Name (e.g. Emerald Green)"
+                      value={newColorName}
+                      onChange={(e) => setNewColorName(e.target.value)}
+                      style={{ flex: "1 1 180px", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-color, #ccc)" }}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 500 }}>Hex:</label>
+                      <input
+                        type="color"
+                        value={newColorHex}
+                        onChange={(e) => setNewColorHex(e.target.value)}
+                        style={{ width: "36px", height: "36px", padding: 0, border: "none", cursor: "pointer", background: "transparent" }}
+                      />
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", cursor: "pointer", fontWeight: 500 }}>
+                      <input
+                        type="checkbox"
+                        checked={newColorInStock}
+                        onChange={(e) => setNewColorInStock(e.target.checked)}
+                      />
+                      In Stock
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: "8px 14px", fontSize: "0.82rem" }}
+                      onClick={() => {
+                        if (newColorName.trim()) {
+                          setProductForm(p => ({
+                            ...p,
+                            colors: [...p.colors, { name: newColorName.trim(), hex: newColorHex, inStock: newColorInStock }]
+                          }));
+                          setNewColorName("");
+                        }
+                      }}
+                    >
+                      + Add Color
+                    </button>
+                  </div>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -1015,6 +1116,80 @@ export default function ProductsPage() {
                     value={editForm.shipping}
                     onChange={(e) => setEditForm((p) => ({ ...p, shipping: e.target.value }))}
                   />
+                </div>
+
+                {/* Color Variants Manager (Edit Form) */}
+                <div style={{ borderTop: "1px solid var(--border-color, #e5e5e5)", paddingTop: "16px", marginTop: "16px", marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>Color Variants & Swatches</label>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #666)", marginBottom: "12px" }}>
+                    Configure color swatches for this product. Storefront will display ONLY the colors configured here.
+                  </p>
+
+                  {editForm.colors && editForm.colors.length > 0 ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+                      {editForm.colors.map((c, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-card, #f8f9fa)", border: "1px solid var(--border-color, #e2e8f0)", borderRadius: "20px", padding: "4px 10px 4px 8px", fontSize: "0.85rem" }}>
+                          <span style={{ width: "14px", height: "14px", borderRadius: "50%", backgroundColor: c.hex, border: "1px solid rgba(0,0,0,0.2)" }} />
+                          <span style={{ fontWeight: 600 }}>{c.name}</span>
+                          <span style={{ fontSize: "0.72rem", color: c.inStock ? "#2e7d32" : "#d32f2f", fontWeight: 700 }}>
+                            {c.inStock ? "(In Stock)" : "(Out of Stock)"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setEditForm(p => ({ ...p, colors: p.colors.filter((_, i) => i !== idx) }))}
+                            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", display: "flex", alignItems: "center", marginLeft: "4px" }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "0.8rem", color: "#888", fontStyle: "italic", marginBottom: "10px" }}>No color variants configured yet.</p>
+                  )}
+
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                    <input
+                      type="text"
+                      placeholder="Color Name (e.g. Royal Maroon)"
+                      value={editNewColorName}
+                      onChange={(e) => setEditNewColorName(e.target.value)}
+                      style={{ flex: "1 1 180px", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-color, #ccc)" }}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 500 }}>Hex:</label>
+                      <input
+                        type="color"
+                        value={editNewColorHex}
+                        onChange={(e) => setEditNewColorHex(e.target.value)}
+                        style={{ width: "36px", height: "36px", padding: 0, border: "none", cursor: "pointer", background: "transparent" }}
+                      />
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", cursor: "pointer", fontWeight: 500 }}>
+                      <input
+                        type="checkbox"
+                        checked={editNewColorInStock}
+                        onChange={(e) => setEditNewColorInStock(e.target.checked)}
+                      />
+                      In Stock
+                    </label>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: "8px 14px", fontSize: "0.82rem" }}
+                      onClick={() => {
+                        if (editNewColorName.trim()) {
+                          setEditForm(p => ({
+                            ...p,
+                            colors: [...p.colors, { name: editNewColorName.trim(), hex: editNewColorHex, inStock: editNewColorInStock }]
+                          }));
+                          setEditNewColorName("");
+                        }
+                      }}
+                    >
+                      + Add Color
+                    </button>
+                  </div>
                 </div>
 
                 {/* 5. Images Manager */}
