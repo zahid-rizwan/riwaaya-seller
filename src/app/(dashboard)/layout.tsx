@@ -11,7 +11,9 @@ import {
   LogOut, 
   Loader2, 
   AlertCircle,
-  Bell
+  Bell,
+  Menu,
+  X
 } from "lucide-react";
 import { api, UserMe, SellerProfile } from "@/lib/api";
 import styles from "./dashboard.module.css";
@@ -27,6 +29,7 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserMe | null>(null);
   const [seller, setSeller] = useState<SellerProfile | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -52,7 +55,7 @@ export default function DashboardLayout({
         bank_details: { bank_name: 'Standard Chartered', account_number: '0100998877', ifsc_code: 'SCB001', account_holder: 'Zahid' },
         verification_status: 'APPROVED',
         commission_percentage: '10',
-        contact_phone: userObj.phone || '+92 300 0000000',
+        contact_phone: userObj.phone || '+91 9876543210',
         contact_email: userObj.email || 'seller@riwaya.com',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -72,6 +75,11 @@ export default function DashboardLayout({
     fetchProfile();
   }, [router]);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = () => {
     api.logout();
   };
@@ -79,7 +87,7 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className={styles.loadingWrapper}>
-        <Loader2 className="animate-spin text-teal-500" size={40} />
+        <Loader2 className="animate-spin text-[#6b1929]" size={40} />
         <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Loading Seller Workspace...</p>
       </div>
     );
@@ -89,7 +97,7 @@ export default function DashboardLayout({
     return (
       <div className={styles.loadingWrapper}>
         <div className={styles.errorBox}>
-          <AlertCircle size={48} color="#ef4444" style={{ margin: "0 auto 16px" }} />
+          <AlertCircle size={48} color="#dc2626" style={{ margin: "0 auto 16px" }} />
           <h3 className={styles.errorTitle}>Access Denied</h3>
           <p className={styles.errorText}>
             Your account ({user.username}) is registered as a {user.role}. This portal is exclusively for verified sellers.
@@ -115,11 +123,26 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.layoutWrapper}>
+      {/* Mobile Drawer Overlay */}
+      <div 
+        className={`${styles.mobileOverlay} ${mobileMenuOpen ? styles.mobileOverlayOpen : ''}`} 
+        onClick={() => setMobileMenuOpen(false)}
+      />
+
       {/* Sidebar Navigation */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.brandArea}>
-          <span className={styles.logo}>RIWAAYA</span>
-          <span className={styles.portalBadge}>SELLER</span>
+          <div className={styles.brandInfo}>
+            <span className={styles.logo}>RIWAAYA</span>
+            <span className={styles.portalBadge}>SELLER</span>
+          </div>
+          <button 
+            className={styles.closeMobileBtn}
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close Mobile Menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -167,6 +190,14 @@ export default function DashboardLayout({
         {/* Top Header Bar */}
         <header className={styles.header}>
           <div className={styles.headerLeft}>
+            <button 
+              className={styles.mobileMenuBtn}
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open Mobile Menu"
+            >
+              <Menu size={22} />
+            </button>
+
             {seller && (
               <span className={`badge ${getStatusBadgeClass(seller.verification_status)}`}>
                 {seller.verification_status === "APPROVED" 
@@ -179,8 +210,8 @@ export default function DashboardLayout({
           </div>
 
           <div className={styles.headerRight}>
-            <button className="btn-secondary" style={{ padding: "8px 10px", borderRadius: "50%", background: "#f1f5f9", border: "1px solid #e2e8f0", color: "#475569" }} aria-label="Notifications">
-              <Bell size={18} />
+            <button className="btn-secondary" style={{ padding: "8px", borderRadius: "50%", background: "#fbf8f3" }} aria-label="Notifications">
+              <Bell size={18} color="#6b1929" />
             </button>
 
             <div className={styles.sellerProfileInfo}>
@@ -197,11 +228,11 @@ export default function DashboardLayout({
         {/* Dynamic Page Content */}
         <main className={styles.pageContent}>
           {seller?.verification_status === "PENDING" && (
-            <div className="card" style={{ marginBottom: "24px", borderColor: "rgba(245, 158, 11, 0.3)", background: "rgba(245, 158, 11, 0.05)" }}>
+            <div className="card" style={{ marginBottom: "24px", borderColor: "rgba(217, 119, 6, 0.4)", background: "rgba(217, 119, 6, 0.05)" }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <AlertCircle size={20} color="#f59e0b" />
+                <AlertCircle size={20} color="#d97706" />
                 <div>
-                  <h4 style={{ color: "#f59e0b", marginBottom: "2px" }}>Boutique Under Review</h4>
+                  <h4 style={{ color: "#b45309", marginBottom: "2px", fontWeight: 700 }}>Boutique Under Review</h4>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
                     Your boutique documents are being reviewed by the Riwaaya Admin team. You can pre-add products while waiting for approval.
                   </p>

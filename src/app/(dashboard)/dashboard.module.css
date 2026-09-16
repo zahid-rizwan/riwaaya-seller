@@ -2,14 +2,15 @@
   display: flex;
   min-height: 100vh;
   background-color: var(--bg-main);
+  position: relative;
 }
 
-/* Sidebar Component - Locked Fixed on Screen Left Edge */
+/* Sidebar Component - Desktop & Mobile Drawer */
 .sidebar {
   width: 260px;
-  background-color: #3b52e1;
-  border-right: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 30px 20px;
+  background: linear-gradient(180deg, #1c070c 0%, #2b0b14 100%);
+  border-right: 1px solid rgba(184, 150, 62, 0.25);
+  padding: 28px 20px;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -19,35 +20,59 @@
   height: 100vh;
   z-index: 100;
   overflow-y: auto;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile Sidebar Drawer Overlay */
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 95;
 }
 
 .brandArea {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36px;
+  padding-left: 4px;
+}
+
+.brandInfo {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 40px;
-  padding-left: 8px;
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: #ffffff;
   text-transform: uppercase;
 }
 
 .portalBadge {
-  font-size: 0.65rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  font-size: 0.625rem;
+  background: rgba(184, 150, 62, 0.25);
+  color: #b8963e;
   padding: 3px 8px;
   border-radius: 4px;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.05em;
+  font-weight: 800;
+  border: 1px solid rgba(184, 150, 62, 0.4);
+  letter-spacing: 0.08em;
+}
+
+.closeMobileBtn {
+  display: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px;
 }
 
 .nav {
@@ -56,7 +81,6 @@
   gap: 8px;
 }
 
-/* High Contrast Crisp White Nav Links */
 .navLink {
   display: flex;
   align-items: center;
@@ -64,29 +88,34 @@
   padding: 12px 16px;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 0.925rem;
   font-weight: 600;
   transition: all 0.2s ease;
   border: 1px solid transparent;
 }
 
 .navLink svg {
-  color: #ffffff;
-  opacity: 0.9;
+  color: #b8963e;
+  transition: color 0.2s ease;
 }
 
 .navLink:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(184, 150, 62, 0.15);
+  border-color: rgba(184, 150, 62, 0.2);
 }
 
 .navLinkActive {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: inset 3px 0 0 #ffffff;
+  background: rgba(107, 25, 41, 0.8);
+  border-color: rgba(184, 150, 62, 0.4);
+  box-shadow: inset 3px 0 0 #b8963e, 0 4px 12px rgba(107, 25, 41, 0.3);
   font-weight: 700;
+}
+
+.navLinkActive svg {
+  color: #ffffff;
 }
 
 .logoutBtn {
@@ -96,11 +125,11 @@
   gap: 12px;
   padding: 12px 16px;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   width: 100%;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 0.925rem;
   font-weight: 600;
   transition: all 0.2s ease;
   justify-content: flex-start;
@@ -108,32 +137,33 @@
 }
 
 .logoutBtn:hover {
-  background: rgba(239, 68, 68, 0.8);
-  border-color: rgba(239, 68, 68, 0.9);
+  background: rgba(220, 38, 38, 0.85);
+  border-color: rgba(220, 38, 38, 0.9);
   color: #ffffff;
 }
 
-/* Main Content Workspace Offset for Fixed Sidebar */
+/* Main Content Workspace */
 .mainContent {
   flex: 1;
   margin-left: 260px;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Prevents flex children from overflowing */
+  min-width: 0;
+  transition: margin-left 0.3s ease;
 }
 
 .header {
   height: 70px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(184, 150, 62, 0.2);
   background-color: #ffffff;
-  padding: 0 40px;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 90;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(107, 25, 41, 0.03);
 }
 
 .headerLeft {
@@ -142,10 +172,19 @@
   gap: 12px;
 }
 
+.mobileMenuBtn {
+  display: none;
+  background: #fdfbf7;
+  border: 1px solid rgba(184, 150, 62, 0.3);
+  color: #6b1929;
+  padding: 8px;
+  border-radius: 8px;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .sellerProfileInfo {
@@ -156,39 +195,40 @@
 
 .businessName {
   font-weight: 700;
-  font-size: 0.95rem;
-  color: #0f172a;
+  font-size: 0.925rem;
+  color: #1c1917;
 }
 
 .username {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.725rem;
+  color: #78716c;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #3b52e1;
+  background: linear-gradient(135deg, #6b1929 0%, #8b2336 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 0.95rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  border: 2px solid #b8963e;
+  box-shadow: 0 2px 8px rgba(107, 25, 41, 0.2);
 }
 
 .pageContent {
   flex: 1;
-  padding: 40px;
+  padding: 32px 32px 48px;
   overflow-y: auto;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* Loading state */
+/* Loading & Error States */
 .loadingWrapper {
   min-height: 100vh;
   display: flex;
@@ -203,15 +243,16 @@
   max-width: 480px;
   padding: 32px;
   text-align: center;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
 }
 
 .errorTitle {
   font-size: 1.25rem;
-  font-weight: 600;
-  color: #f87171;
+  font-weight: 700;
+  color: #dc2626;
   margin-bottom: 8px;
 }
 
@@ -219,4 +260,39 @@
   color: var(--text-secondary);
   font-size: 0.95rem;
   margin-bottom: 20px;
+}
+
+/* Responsive Styles for Mobile & Tablet */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .mobileOverlayOpen {
+    display: block;
+  }
+
+  .closeMobileBtn {
+    display: flex;
+  }
+
+  .mainContent {
+    margin-left: 0;
+  }
+
+  .mobileMenuBtn {
+    display: flex;
+  }
+
+  .header {
+    padding: 0 16px;
+  }
+
+  .pageContent {
+    padding: 20px 16px 36px;
+  }
 }
