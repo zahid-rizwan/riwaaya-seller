@@ -132,6 +132,7 @@ export default function AddProductPage() {
 
     try {
       let uploadedUrls: string[] = ["/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"];
+      let imageKeys: string[] = [];
 
       if (imageFiles.length > 0) {
         const formData = new FormData();
@@ -140,6 +141,7 @@ export default function AddProductPage() {
           const uploadRes = await api.post("/products/upload", formData);
           if (uploadRes && Array.isArray(uploadRes.urls)) {
             uploadedUrls = uploadRes.urls;
+            imageKeys = Array.isArray(uploadRes.keys) ? uploadRes.keys : [];
           }
         } catch (uploadErr) {
           console.error("Image upload failed, fallback to defaults:", uploadErr);
@@ -156,6 +158,7 @@ export default function AddProductPage() {
         materials,
         shipping,
         images: uploadedUrls,
+        imageKeys,
         variants: variants.map(v => ({
           size: v.size,
           sku: v.sku,

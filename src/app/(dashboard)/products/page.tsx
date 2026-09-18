@@ -278,6 +278,7 @@ export default function ProductsPage() {
 
     try {
       let uploadedImageUrls: string[] = ["/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png"];
+      let uploadedImageKeys: string[] = [];
       
       if (imageFiles.length > 0) {
         setUploadingImage(true);
@@ -290,6 +291,7 @@ export default function ProductsPage() {
           const uploadRes = await api.post("/products/upload", formData);
           if (uploadRes && Array.isArray(uploadRes.urls)) {
             uploadedImageUrls = uploadRes.urls;
+            uploadedImageKeys = Array.isArray(uploadRes.keys) ? uploadRes.keys : [];
           }
         } catch (uploadErr: any) {
           console.error("Images upload failed:", uploadErr);
@@ -313,7 +315,8 @@ export default function ProductsPage() {
         description: productForm.description,
         materials: productForm.materials,
         shipping: productForm.shipping,
-        images: uploadedImageUrls
+        images: uploadedImageUrls,
+        imageKeys: uploadedImageKeys
       }).catch(() => null);
 
       // Reset & Reload
