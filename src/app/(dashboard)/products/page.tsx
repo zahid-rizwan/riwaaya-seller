@@ -217,6 +217,7 @@ export default function ProductsPage() {
     sku: "",
     size: "M",
     color: "",
+    imageFile: null as File | null,
     price: "",
     discount_price: "",
     available_stock: "10",
@@ -346,16 +347,24 @@ export default function ProductsPage() {
     setFormSubmitting(true);
 
     try {
+      let imageKeys: string[] = [];
+      if (variantForm.imageFile) {
+        const imageData = new FormData();
+        imageData.append("images", variantForm.imageFile);
+        const uploadRes = await api.post<{ keys?: string[] }>("/products/upload", imageData);
+        imageKeys = Array.isArray(uploadRes.keys) ? uploadRes.keys : [];
+      }
       await api.post(`/products/${selectedProductId}/variants`, {
         sku: variantForm.sku,
         size: variantForm.size,
         color: variantForm.color,
+        imageKeys,
         price: parseFloat(variantForm.price),
         available_stock: parseInt(variantForm.available_stock || "10")
       }).catch(() => null);
 
       // Reset & Reload
-      setVariantForm({ sku: "", size: "M", color: "", price: "", discount_price: "", available_stock: "10" });
+      setVariantForm({ sku: "", size: "M", color: "", imageFile: null, price: "", discount_price: "", available_stock: "10" });
       setSelectedAttributeValues([]);
       setShowVariantModal(false);
       await loadData();
@@ -818,13 +827,22 @@ export default function ProductsPage() {
                   </div>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
                     <label htmlFor="var-color">Color *</label>
-                    <input id="var-color" type="text" required placeholder="e.g. Ivory" value={variantForm.color} onChange={(e) => setVariantForm((v) => ({ ...v, color: e.target.value }))} />
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input id="var-color-picker" type="color" value={newColorHex} onChange={(e) => { setNewColorHex(e.target.value); setVariantForm((v) => ({ ...v, color: e.target.value })); }} style={{ width: "46px", height: "38px", padding: "3px" }} />
+                      <input id="var-color" type="text" required placeholder="e.g. Ivory" value={variantForm.color} onChange={(e) => setVariantForm((v) => ({ ...v, color: e.target.value }))} />
+                    </div>
                   </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="var-image">Variant Image (optional)</label>
+                  <input id="var-image" type="file" accept="image/*" onChange={(e) => setVariantForm((v) => ({ ...v, imageFile: e.target.files?.[0] || null }))} />
+                  <small style={{ color: "var(--text-muted)" }}>Leave empty to use the main product image.</small>
                 </div>
 
                 <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                    <label htmlFor="var-price">Retail Price (INR) *</label>
+                    <label htmlFor="var-price">Original Price (INR) *</label>
                     <input
                       id="var-price"
                       type="number"
@@ -835,7 +853,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                    <label htmlFor="var-disc-price">Discount Price (INR)</label>
+                    <label htmlFor="var-disc-price">Sale Price (INR)</label>
                     <input
                       id="var-disc-price"
                       type="number"

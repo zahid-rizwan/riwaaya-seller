@@ -26,6 +26,7 @@ interface VariantItem {
   id: string;
   size: string;
   color: string;
+  imageFile?: File | null;
   sku: string;
   price: string;
   stock: string;
@@ -57,9 +58,9 @@ export default function AddProductPage() {
 
   // Variants State
   const [variants, setVariants] = useState<VariantItem[]>([
-    { id: "v_1", size: "S", color: "Ivory", sku: "SKU-S-01", price: "18500", stock: "4" },
-    { id: "v_2", size: "M", color: "Ivory", sku: "SKU-M-01", price: "18500", stock: "5" },
-    { id: "v_3", size: "L", color: "Ivory", sku: "SKU-L-01", price: "18500", stock: "3" }
+    { id: "v_1", size: "S", color: "Ivory", imageFile: null, sku: "SKU-S-01", price: "18500", stock: "4" },
+    { id: "v_2", size: "M", color: "Ivory", imageFile: null, sku: "SKU-M-01", price: "18500", stock: "5" },
+    { id: "v_3", size: "L", color: "Ivory", imageFile: null, sku: "SKU-L-01", price: "18500", stock: "3" }
   ]);
 
   // Form submitting / Feedback state
@@ -105,6 +106,7 @@ export default function AddProductPage() {
       id: `v_${Date.now()}`,
       size: nextSize,
       color: "Ivory",
+      imageFile: null,
       sku: `SKU-${nextSize}-${Math.floor(100 + Math.random() * 900)}`,
       price: price || "18500",
       stock: "5"
@@ -116,7 +118,7 @@ export default function AddProductPage() {
     setVariants((prev) => prev.filter((v) => v.id !== id));
   };
 
-  const updateVariant = (id: string, field: keyof VariantItem, value: string) => {
+  const updateVariant = (id: string, field: keyof VariantItem, value: string | File | null) => {
     setVariants((prev) =>
       prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
     );
@@ -151,6 +153,17 @@ export default function AddProductPage() {
         }
       }
 
+      const variantsWithImages = await Promise.all(variants.map(async (v) => {
+        let imageKeys: string[] = [];
+        if (v.imageFile) {
+          const imageData = new FormData();
+          imageData.append("images", v.imageFile);
+          const uploadRes = await api.post<{ keys?: string[] }>("/products/upload", imageData);
+          imageKeys = Array.isArray(uploadRes.keys) ? uploadRes.keys : [];
+        }
+        return { ...v, imageKeys };
+      }));
+
       await api.post("/products", {
         name,
         price: parseFloat(price || "18500"),
@@ -163,9 +176,10 @@ export default function AddProductPage() {
         shipping,
         images: uploadedUrls,
         imageKeys,
-        variants: variants.map(v => ({
+        variants: variantsWithImages.map(v => ({
           size: v.size,
           color: v.color,
+          imageKeys: v.imageKeys,
           sku: v.sku,
           price: parseFloat(v.price || price || "18500"),
           originalPrice: parseFloat(price || "18500"),
@@ -529,6 +543,7 @@ export default function AddProductPage() {
                   <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left", fontSize: "0.8rem", color: "var(--text-muted)" }}>
                     <th style={{ padding: "8px" }}>Size Option</th>
                     <th style={{ padding: "8px" }}>Color</th>
+                    <th style={{ padding: "8px" }}>Variant Image</th>
                     <th style={{ padding: "8px" }}>SKU Code</th>
                     <th style={{ padding: "8px" }}>Price (PKR)</th>
                     <th style={{ padding: "8px" }}>Stock Qty</th>
@@ -553,7 +568,13 @@ export default function AddProductPage() {
                         </select>
                       </td>
                       <td style={{ padding: "8px" }}>
-                        <input type="text" style={{ padding: "6px 10px", fontSize: "0.85rem" }} value={v.color} onChange={(e) => updateVariant(v.id, "color", e.target.value)} />
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          <input type="color" value={/^#[0-9A-Fa-f]{6}$/.test(v.color) ? v.color : "#B8963E"} onChange={(e) => updateVariant(v.id, "color", e.target.value)} style={{ width: "38px", height: "32px", padding: "2px" }} />
+                          <input type="text" style={{ padding: "6px 10px", fontSize: "0.85rem" }} value={v.color} onChange={(e) => updateVariant(v.id, "color", e.target.value)} />
+                        </div>
+                      </td>
+                      <td style={{ padding: "8px" }}>
+                        <input type="file" accept="image/*" title="Optional variant image" onChange={(e) => updateVariant(v.id, "imageFile", e.target.files?.[0] || null)} style={{ maxWidth: "150px", fontSize: "0.75rem" }} />
                       </td>
                       <td style={{ padding: "8px" }}>
                         <input 
