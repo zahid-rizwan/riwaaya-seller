@@ -167,9 +167,11 @@ export default function ProductsPage() {
         images: finalImages
       };
 
-      await api.put(`/seller/products/${editingProductId}`, updatePayload).catch(async () => {
+      try {
+        await api.put(`/seller/products/${editingProductId}`, updatePayload);
+      } catch (sellerUpdateError) {
         await api.put(`/products/${editingProductId}`, updatePayload);
-      });
+      }
 
       setShowEditModal(false);
       await loadData();
