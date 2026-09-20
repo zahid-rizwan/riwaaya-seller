@@ -25,6 +25,7 @@ import { api } from "@/lib/api";
 interface VariantItem {
   id: string;
   size: string;
+  color: string;
   sku: string;
   price: string;
   stock: string;
@@ -39,6 +40,7 @@ export default function AddProductPage() {
   const [tag, setTag] = useState("suits");
   const [badge, setBadge] = useState("New");
   const [price, setPrice] = useState("18500");
+  const [originalPrice, setOriginalPrice] = useState("22000");
   const [stock, setStock] = useState("10");
 
   // Descriptions State (3 Tabs)
@@ -55,9 +57,9 @@ export default function AddProductPage() {
 
   // Variants State
   const [variants, setVariants] = useState<VariantItem[]>([
-    { id: "v_1", size: "S", sku: "SKU-S-01", price: "18500", stock: "4" },
-    { id: "v_2", size: "M", sku: "SKU-M-01", price: "18500", stock: "5" },
-    { id: "v_3", size: "L", sku: "SKU-L-01", price: "18500", stock: "3" }
+    { id: "v_1", size: "S", color: "Ivory", sku: "SKU-S-01", price: "18500", stock: "4" },
+    { id: "v_2", size: "M", color: "Ivory", sku: "SKU-M-01", price: "18500", stock: "5" },
+    { id: "v_3", size: "L", color: "Ivory", sku: "SKU-L-01", price: "18500", stock: "3" }
   ]);
 
   // Form submitting / Feedback state
@@ -102,6 +104,7 @@ export default function AddProductPage() {
     const newV: VariantItem = {
       id: `v_${Date.now()}`,
       size: nextSize,
+      color: "Ivory",
       sku: `SKU-${nextSize}-${Math.floor(100 + Math.random() * 900)}`,
       price: price || "18500",
       stock: "5"
@@ -151,6 +154,7 @@ export default function AddProductPage() {
       await api.post("/products", {
         name,
         price: parseFloat(price || "18500"),
+        originalPrice: parseFloat(originalPrice || price || "18500"),
         stock: parseInt(stock || "10"),
         category,
         tag,
@@ -161,8 +165,10 @@ export default function AddProductPage() {
         imageKeys,
         variants: variants.map(v => ({
           size: v.size,
+          color: v.color,
           sku: v.sku,
           price: parseFloat(v.price || price || "18500"),
+          originalPrice: parseFloat(price || "18500"),
           stock: parseInt(v.stock || "5")
         }))
       });
@@ -277,7 +283,7 @@ export default function AddProductPage() {
               </div>
 
               <div>
-                <label htmlFor="price">Base Retail Price (PKR) *</label>
+                <label htmlFor="price">Sale Price (PKR) *</label>
                 <input
                   id="price"
                   type="number"
@@ -285,6 +291,19 @@ export default function AddProductPage() {
                   placeholder="18500"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="originalPrice">Original Price (PKR) *</label>
+                <input
+                  id="originalPrice"
+                  type="number"
+                  required
+                  min="0"
+                  placeholder="22000"
+                  value={originalPrice}
+                  onChange={(e) => setOriginalPrice(e.target.value)}
                 />
               </div>
 
@@ -501,7 +520,7 @@ export default function AddProductPage() {
               </button>
             </div>
             <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "16px" }}>
-              Configure size options, custom SKUs, specific pricing, and available stock per size.
+              Configure size, color, custom SKU, pricing, and available stock for every variant.
             </p>
 
             <div style={{ overflowX: "auto" }}>
@@ -509,6 +528,7 @@ export default function AddProductPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--border-color)", textAlign: "left", fontSize: "0.8rem", color: "var(--text-muted)" }}>
                     <th style={{ padding: "8px" }}>Size Option</th>
+                    <th style={{ padding: "8px" }}>Color</th>
                     <th style={{ padding: "8px" }}>SKU Code</th>
                     <th style={{ padding: "8px" }}>Price (PKR)</th>
                     <th style={{ padding: "8px" }}>Stock Qty</th>
@@ -531,6 +551,9 @@ export default function AddProductPage() {
                           <option value="XL">XL</option>
                           <option value="XXL">XXL</option>
                         </select>
+                      </td>
+                      <td style={{ padding: "8px" }}>
+                        <input type="text" style={{ padding: "6px 10px", fontSize: "0.85rem" }} value={v.color} onChange={(e) => updateVariant(v.id, "color", e.target.value)} />
                       </td>
                       <td style={{ padding: "8px" }}>
                         <input 

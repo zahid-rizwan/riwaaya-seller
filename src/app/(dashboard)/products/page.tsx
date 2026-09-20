@@ -215,6 +215,8 @@ export default function ProductsPage() {
   // Form State: Add Variant
   const [variantForm, setVariantForm] = useState({
     sku: "",
+    size: "M",
+    color: "",
     price: "",
     discount_price: "",
     available_stock: "10",
@@ -346,12 +348,14 @@ export default function ProductsPage() {
     try {
       await api.post(`/products/${selectedProductId}/variants`, {
         sku: variantForm.sku,
+        size: variantForm.size,
+        color: variantForm.color,
         price: parseFloat(variantForm.price),
         available_stock: parseInt(variantForm.available_stock || "10")
       }).catch(() => null);
 
       // Reset & Reload
-      setVariantForm({ sku: "", price: "", discount_price: "", available_stock: "10" });
+      setVariantForm({ sku: "", size: "M", color: "", price: "", discount_price: "", available_stock: "10" });
       setSelectedAttributeValues([]);
       setShowVariantModal(false);
       await loadData();
@@ -803,6 +807,19 @@ export default function ProductsPage() {
                     value={variantForm.sku}
                     onChange={(e) => setVariantForm((v) => ({ ...v, sku: e.target.value }))}
                   />
+                </div>
+
+                <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="var-size">Size *</label>
+                    <select id="var-size" required value={variantForm.size} onChange={(e) => setVariantForm((v) => ({ ...v, size: e.target.value }))}>
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'].map((size) => <option key={size}>{size}</option>)}
+                    </select>
+                  </div>
+                  <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                    <label htmlFor="var-color">Color *</label>
+                    <input id="var-color" type="text" required placeholder="e.g. Ivory" value={variantForm.color} onChange={(e) => setVariantForm((v) => ({ ...v, color: e.target.value }))} />
+                  </div>
                 </div>
 
                 <div className={styles.grid2} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
