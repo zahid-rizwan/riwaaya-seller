@@ -42,7 +42,6 @@ export default function AddProductPage() {
   const [badge, setBadge] = useState("New");
   const [price, setPrice] = useState("18500");
   const [originalPrice, setOriginalPrice] = useState("22000");
-  const [stock, setStock] = useState("10");
 
   // Descriptions State (3 Tabs)
   const [activeTab, setActiveTab] = useState<"details" | "materials" | "shipping">("details");
@@ -168,7 +167,6 @@ export default function AddProductPage() {
         name,
         price: parseFloat(price || "18500"),
         originalPrice: parseFloat(originalPrice || price || "18500"),
-        stock: parseInt(stock || "10"),
         category,
         tag,
         description,
@@ -277,7 +275,7 @@ export default function AddProductPage() {
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "16px" }}>
               <div>
                 <label htmlFor="category">Category *</label>
                 <select
@@ -321,17 +319,6 @@ export default function AddProductPage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="stock">Total Stock Level *</label>
-                <input
-                  id="stock"
-                  type="number"
-                  required
-                  placeholder="10"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                />
-              </div>
             </div>
           </div>
 
