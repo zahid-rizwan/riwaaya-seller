@@ -73,6 +73,7 @@ export default function EditProductPage() {
   const [category, setCategory] = useState("1");
   const [tag, setTag] = useState("suits");
   const [badge, setBadge] = useState("New");
+  const [productType, setProductType] = useState<"readymade" | "unstitched">("readymade");
   const [price, setPrice] = useState("18500");
   const [originalPrice, setOriginalPrice] = useState("22000");
 
@@ -138,6 +139,7 @@ export default function EditProductPage() {
           setCategory(catVal);
           setTag(data.tag || "suits");
           setBadge(data.badge || "New");
+          setProductType(data.productType || data.product_type || "readymade");
 
           const pPrice = data.price ? String(data.price) : "18500";
           const pOrigPrice = data.originalPrice ? String(data.originalPrice) : String(Math.round(parseFloat(pPrice) * 1.25));
@@ -267,7 +269,8 @@ export default function EditProductPage() {
   };
 
   const generateVariantMatrix = () => {
-    if (selectedSizes.length === 0 || selectedColors.length === 0) {
+    const targetSizes = productType === "unstitched" ? ["Unstitched"] : selectedSizes;
+    if (targetSizes.length === 0 || selectedColors.length === 0) {
       setFormError("Please select at least one Size and one Color to generate matrix.");
       return;
     }
@@ -279,7 +282,7 @@ export default function EditProductPage() {
     setVariants((prevVariants) => {
       const merged: VariantItem[] = [];
 
-      selectedSizes.forEach((sz) => {
+      targetSizes.forEach((sz) => {
         selectedColors.forEach((col) => {
           // Check if variant for this size & color already exists
           const existing = prevVariants.find(
@@ -471,6 +474,8 @@ export default function EditProductPage() {
         category,
         tag,
         badge,
+        productType,
+        product_type: productType,
         description,
         materials,
         shipping,
@@ -651,6 +656,28 @@ export default function EditProductPage() {
                   <option value="2">Co-Ord Sets</option>
                   <option value="3">Party & Formal Wear</option>
                   <option value="4">Gift Hampers</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="productType">Product Type / Stitching *</label>
+                <select
+                  id="productType"
+                  disabled={isViewOnly}
+                  value={productType}
+                  onChange={(e) => {
+                    const val = e.target.value as "readymade" | "unstitched";
+                    setProductType(val);
+                    if (val === "unstitched") {
+                      setSelectedSizes(["Unstitched"]);
+                    } else {
+                      setSelectedSizes(["S", "M", "L"]);
+                    }
+                  }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#ffffff", color: "var(--text-primary)", fontSize: "0.92rem", fontWeight: "600" }}
+                >
+                  <option value="readymade">Readymade / Stitched (Has Sizes S, M, L...)</option>
+                  <option value="unstitched">Unstitched / Fabric (No Sizes Needed)</option>
                 </select>
               </div>
 
