@@ -88,7 +88,7 @@ export default function OverviewPage() {
   }, []);
 
   const formatCurrency = (val: number) => {
-    return `PKR ${val.toLocaleString()}`;
+    return `₹${val.toLocaleString('en-IN')}`;
   };
 
   const formatDate = (isoString?: string) => {

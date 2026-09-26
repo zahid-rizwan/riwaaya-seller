@@ -1,5 +1,28 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+export function getValidImageUrl(url?: string): string {
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return '/assets/1540aab590cd7d478ad01cdb1a615d469ef2a808.png';
+  }
+  const clean = url.trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean;
+  }
+  if (clean.startsWith('/assets/')) {
+    return clean;
+  }
+  if (clean.includes('/media/')) {
+    const rel = clean.split('/media/').pop() || '';
+    const origin = (API_BASE || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+    return `${origin}/media/${rel}`;
+  }
+  if (clean.startsWith('/')) {
+    return clean;
+  }
+  const origin = (API_BASE || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+  return `${origin}/media/${clean.replace(/^\//, '')}`;
+}
+
 interface RequestOptions extends RequestInit {
   headers?: Record<string, string>;
 }
