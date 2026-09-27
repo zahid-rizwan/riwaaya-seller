@@ -10,6 +10,14 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Riwaaya Seller Portal | Partner Dashboard",
   description: "Professional vendor management dashboard for Riwaaya Threads luxury couture.",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/assets/riwaaya_logo.png", type: "image/png" }
+    ],
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
